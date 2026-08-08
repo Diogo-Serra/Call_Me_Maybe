@@ -49,7 +49,7 @@ The program uses a small local LLM (Qwen/Qwen3-0.6B by default) through a provid
 - Python dataclasses - [https://docs.python.org/3/library/dataclasses.html](https://docs.python.org/3/library/dataclasses.html)
 - Python exceptions - [https://docs.python.org/3/tutorial/errors.html](https://docs.python.org/3/tutorial/errors.html)
 
-**7) Project tooling: uv, Makefile, pytest**
+**7) Project tools: uv, Makefile, pytest**
 
 - uv docs (Astral) - [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/)
 - GNU Make manual - [https://www.gnu.org/software/make/manual/make.html](https://www.gnu.org/software/make/manual/make.html)
