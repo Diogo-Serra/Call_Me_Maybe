@@ -37,6 +37,21 @@ The `llm_sdk` package wraps the Hugging Face model behind a small, fixed set of 
 - `get_path_to_merges_file()` - downloads and returns the local path to the model's BPE merges file.
 - `get_path_to_tokenizer_file()` - downloads and returns the local path to the model's tokenizer file.
 
+---
+
+## Autoregressive generation loop
+
+```mermaid
+flowchart LR
+    A[prompt text] -->|encode| B[input ids]
+    B -->|get_logits_from_input_ids| C[next-token logits]
+    C -->|*constrained decoding| D[next token id]
+    D -->|append and repeat| B
+    D -->|decode| E[output text / JSON]
+
+    F[get_path_to_vocab_file / merges / tokenizer] -.->|build grammar mask| C
+```
+
 ## Resources
 
 **1) How LLMs generate text, token by token**
