@@ -4,9 +4,9 @@
 
 ## Description
 
-Call Me Maybe is a function calling project that translates natural language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of natural language prompts, the goal is to identify the correct function to call and extract its arguments with the correct types, producing valid JSON output for every single prompt.
+**Call Me Maybe is a function calling project that translates natural language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of natural language prompts, the goal is to identify the correct function to call and extract its arguments with the correct types, producing valid JSON output for every single prompt.
 
-The program uses a small local LLM (Qwen/Qwen3-0.6B) through a provided SDK, and relies on constrained decoding - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both syntactically valid JSON and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model.
+The program uses a **small local LLM** (Qwen/Qwen3-0.6B) through a provided SDK, and relies on **constrained decoding** - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both **syntactically valid JSON** and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model.
 
 ## Project structure
 
@@ -26,12 +26,23 @@ Call_Me_Maybe/
 
 The `data/input` directory stores the evaluation cases and function definitions used to test the model, while the `llm_sdk` package handles local LLM integration and dependency setup. The root README provides the project context and technical background, keeping the repository organized around data, model access, and documentation.
 
+## Small_LLM API
+
+The `llm_sdk` package wraps the Hugging Face model behind a small, fixed set of methods:
+
+- `encode(text)` - tokenizes a string into input ids.
+- `decode(ids)` - converts token ids back into a string.
+- `get_logits_from_input_ids(input_ids)` - returns the raw next-token logits for a given sequence.
+- `get_path_to_vocab_file()` - downloads and returns the local path to the model's vocab file.
+- `get_path_to_merges_file()` - downloads and returns the local path to the model's BPE merges file.
+- `get_path_to_tokenizer_file()` - downloads and returns the local path to the model's tokenizer file.
+
 ## Resources
 
 **1) How LLMs generate text, token by token**
 
 - OpenAI Cookbook - [https://cookbook.openai.com/](https://cookbook.openai.com/)
-- Google AI for Developers (Gemini docs) - [https://ai.google.dev/](https://ai.google.dev/)
+- Google AI for Developers - [https://ai.google.dev/](https://ai.google.dev/)
 - Hugging Face Learn - [https://huggingface.co/learn](https://huggingface.co/learn)
 
 **2) Tokenization (BPE / SentencePiece)**
