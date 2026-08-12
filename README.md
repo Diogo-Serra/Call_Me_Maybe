@@ -8,6 +8,24 @@ Call Me Maybe is a function calling project that translates natural language pro
 
 The program uses a small local LLM (Qwen/Qwen3-0.6B) through a provided SDK, and relies on constrained decoding - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both syntactically valid JSON and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model.
 
+## Project structure
+
+```text
+Call_Me_Maybe/
+├── .gitignore
+├── README.md
+├── data/
+│   └── input/
+│       ├── function_calling_tests.json
+│       └── functions_definition.json
+├── llm_sdk/
+│   ├── __init__.py
+│   ├── pyproject.toml
+│   └── uv.lock
+``` 
+
+The `data/input` directory stores the evaluation cases and function definitions used to test the model, while the `llm_sdk` package handles local LLM integration and dependency setup. The root README provides the project context and technical background, keeping the repository organized around data, model access, and documentation.
+
 ## Resources
 
 **1) How LLMs generate text, token by token**
