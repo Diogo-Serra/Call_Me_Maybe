@@ -11,3 +11,7 @@ install:
 
 run:
 	$(ENV_UV) run test_1.py
+
+clean:
+	@echo Cleaning environment ...
+	rm -rf .venv $$(find . -name __pycache__ -o -name .mypy_cache)
