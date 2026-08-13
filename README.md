@@ -248,8 +248,7 @@ the program writes the following into `function_calling_results.json`:
 
 An AI coding assistant (GitHub Copilot Chat) was used throughout development for:
 
-- Scaffolding the initial pydantic class structure (`FunctionDefinition`, `FunctionCallResult`, `Vocabulary`, `ConstrainedDecoder`, `FunctionCallEngine`) from a plan discussed together, then progressively consolidated and refactored.
+- Scaffolding the initial pydantic class structure (`FunctionDefinition`, `FunctionCallResult`, `Vocabulary`, `ConstrainedDecoder`, `FunctionCallEngine`).
 - Implementing and explaining the GPT-2 byte-level BPE reverse mapping needed to decode `vocab.json` into real token text.
-- Understanding layered error handling in `src/__main__.py` (pydantic `ValidationError` field reporting, `OSError`/`ValueError`, and a catch-all).
-- Drafting and iterating on this README.
 - Running the pipeline end-to-end and checking lint (`flake8`, `mypy`) after every change.
+- Drafting and iterating on this README.
