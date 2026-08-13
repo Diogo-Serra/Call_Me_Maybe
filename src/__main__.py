@@ -29,10 +29,10 @@ def main() -> int:
             print(f"  - {location or '<root>'}: {issue['msg']}")
         return 1
     except (OSError, ValueError) as error:
-        print(f"Error: {error}")
+        print(f"\nError: {error}")
         return 1
     except Exception as error:
-        print(f"Unexpected error ({type(error).__name__}): {error}")
+        print(f"\nUnexpected error ({type(error).__name__}): {error}")
         return 1
 
     print(f"Wrote {len(engine.results)} result(s) to {output_path}")
