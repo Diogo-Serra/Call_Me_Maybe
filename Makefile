@@ -13,6 +13,7 @@ install:
 	$(ENV_UV) sync
 
 run:
+	@echo Preparing imports. It can take sometime.
 	$(ENV_UV) run python -m src
 
 debug:
