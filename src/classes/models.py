@@ -1,10 +1,8 @@
 import json
 from typing import Any
-
-from pydantic import BaseModel, ConfigDict
-
-from ..llm_sdk.llm_sdk import Small_LLM_Model
 from .constants import NUMERIC_TOKEN_RE
+from pydantic import BaseModel, ConfigDict
+from ..llm_sdk.llm_sdk import Small_LLM_Model
 
 
 class FunctionDefinition(BaseModel):

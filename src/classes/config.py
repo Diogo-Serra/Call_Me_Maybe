@@ -1,13 +1,9 @@
 import argparse
 from os import environ
 from pathlib import Path
-from typing import Any
-
 from dotenv import load_dotenv
 from pydantic import BaseModel
-
-# config.py lives in src/classes/, so data/ is one level up, under src/
-_SRC_DIR = Path(__file__).parent.parent
+from typing import Any, ClassVar
 
 
 class CliArgs(BaseModel):
@@ -21,6 +17,7 @@ class CliArgs(BaseModel):
 class Init(BaseModel):
     """Loads environment config, default paths, and CLI arguments."""
 
+    _SRC_DIR: ClassVar[Path] = Path(__file__).parent.parent
     hf_token: str | None = None
     data_dir: Path = _SRC_DIR / "data" / "input"
     output_file: Path = (

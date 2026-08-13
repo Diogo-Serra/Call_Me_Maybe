@@ -75,7 +75,7 @@ Call_Me_Maybe/
             └── __init__.py    # Small_LLM_Model
 ```
 
-`src/classes` holds every pydantic model in the project: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), the vocabulary wrapper, the constrained decoder, the engine that orchestrates the whole pipeline, and configuration (`Init`, `CliArgs`). `src/data/input` stores the evaluation cases and function definitions; `src/data/output` is generated on each run and excluded from version control. `src/llm_sdk` is the provided SDK used to talk to the local model.
+`src/classes` holds every pydantic model in the project: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), the vocabulary wrapper, the constrained decoder, the engine that orchestrates the whole pipeline, and configuration (`Init`, `CliArgs`). `src/data/input` stores the evaluation cases and function definitions; `src/data/output` is generated on each run and excluded from version control. `src/llm_sdk` is the provided SDK used to connect to the local model.
 
 ## Small_LLM API
 

@@ -1,9 +1,8 @@
 import json
-from pathlib import Path
 from typing import Any
-
-from pydantic import BaseModel, ConfigDict
+from pathlib import Path
 from .decoder import ConstrainedDecoder
+from pydantic import BaseModel, ConfigDict
 from .models import (
     FunctionCallResult, FunctionDefinition, Small_LLM_Model, Vocabulary
 )
