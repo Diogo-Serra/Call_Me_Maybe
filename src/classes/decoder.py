@@ -1,5 +1,6 @@
+import numpy
 from .constants import NUMBER_PREFIX_RE
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
 
 
@@ -9,6 +10,7 @@ class ConstrainedDecoder(BaseModel):
     vocabulary: Vocabulary
     function_definitions: list[FunctionDefinition]
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    _string_safe_ids: numpy.ndarray | None = PrivateAttr(default=None)
 
     def select_function_name(
         self, llm: Small_LLM_Model, input_ids: list[int]
@@ -63,21 +65,20 @@ class ConstrainedDecoder(BaseModel):
             remaining = [c for c in candidates if c.startswith(partial)]
             if not remaining:
                 break
-            logits = llm.get_logits_from_input_ids(ids)
-            best_id, best_text, best_logit = None, None, float("-inf")
+            logits = numpy.asarray(
+                llm.get_logits_from_input_ids(ids), dtype=float
+            )
+            masked = numpy.full(logits.shape, float("-inf"))
             for token_id, token_text in self.vocabulary.id_to_token.items():
-                if not token_text:
-                    continue
-                candidate = partial + token_text
-                if any(c.startswith(candidate) for c in remaining):
-                    if logits[token_id] > best_logit:
-                        best_id = token_id
-                        best_text = token_text
-                        best_logit = logits[token_id]
-            if best_id is None:
+                if token_text and any(
+                    c.startswith(partial + token_text) for c in remaining
+                ):
+                    masked[token_id] = logits[token_id]
+            if not numpy.isfinite(masked).any():
                 break
+            best_id = int(numpy.argmax(masked))
             ids.append(best_id)
-            partial += best_text
+            partial += self.vocabulary.id_to_token[best_id]
         return partial, ids
 
     def _generate_number(
@@ -88,25 +89,23 @@ class ConstrainedDecoder(BaseModel):
         ids = list(input_ids)
         partial = ""
         for _ in range(12):
-            logits = llm.get_logits_from_input_ids(ids)
-            top_id_all = max(range(len(logits)), key=lambda i: logits[i])
+            logits = numpy.asarray(
+                llm.get_logits_from_input_ids(ids), dtype=float
+            )
+            top_id_all = int(numpy.argmax(logits))
             top_text_all = self.vocabulary.id_to_token.get(top_id_all, "")
             if partial and not NUMBER_PREFIX_RE.match(partial + top_text_all):
                 break
-            best_id, best_text, best_logit = None, None, float("-inf")
+            masked = numpy.full(logits.shape, float("-inf"))
             for token_id in self.vocabulary.numeric_token_ids:
                 token_text = self.vocabulary.id_to_token[token_id]
-                if (
-                    NUMBER_PREFIX_RE.match(partial + token_text)
-                    and logits[token_id] > best_logit
-                ):
-                    best_id = token_id
-                    best_text = token_text
-                    best_logit = logits[token_id]
-            if best_id is None:
+                if NUMBER_PREFIX_RE.match(partial + token_text):
+                    masked[token_id] = logits[token_id]
+            if not numpy.isfinite(masked).any():
                 break
+            best_id = int(numpy.argmax(masked))
             ids.append(best_id)
-            partial += best_text
+            partial += self.vocabulary.id_to_token[best_id]
         try:
             return float(partial), ids
         except ValueError:
@@ -118,22 +117,35 @@ class ConstrainedDecoder(BaseModel):
         """Greedily extend free text, stopping at a quote or newline."""
         ids = list(input_ids)
         partial = ""
+        safe_ids = self._get_string_safe_ids()
         for _ in range(24):
-            logits = llm.get_logits_from_input_ids(ids)
-            top_id_all = max(range(len(logits)), key=lambda i: logits[i])
+            logits = numpy.asarray(
+                llm.get_logits_from_input_ids(ids), dtype=float
+            )
+            top_id_all = int(numpy.argmax(logits))
             top_text_all = self.vocabulary.id_to_token.get(top_id_all, "")
             if partial and ("\n" in top_text_all or '"' in top_text_all):
                 break
-            best_id, best_text, best_logit = None, None, float("-inf")
-            for token_id, token_text in self.vocabulary.id_to_token.items():
-                if not token_text or "\n" in token_text or '"' in token_text:
-                    continue
-                if logits[token_id] > best_logit:
-                    best_id = token_id
-                    best_text = token_text
-                    best_logit = logits[token_id]
-            if best_id is None:
+            masked = numpy.full(logits.shape, float("-inf"))
+            masked[safe_ids] = logits[safe_ids]
+            if not numpy.isfinite(masked).any():
                 break
+            best_id = int(numpy.argmax(masked))
             ids.append(best_id)
-            partial += best_text
+            partial += self.vocabulary.id_to_token[best_id]
         return partial.strip(" '\""), ids
+
+    def _get_string_safe_ids(self) -> numpy.ndarray:
+        """Cache the token ids that never break a JSON string boundary.
+        Unlike enum/number continuation, string safety never depends on
+        `partial`, so the mask can be built once and reused every step."""
+        if self._string_safe_ids is None:
+            self._string_safe_ids = numpy.array(
+                [
+                    token_id
+                    for token_id, text in self.vocabulary.id_to_token.items()
+                    if text and "\n" not in text and '"' not in text
+                ],
+                dtype=int,
+            )
+        return self._string_safe_ids
