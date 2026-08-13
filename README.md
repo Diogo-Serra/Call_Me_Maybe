@@ -200,14 +200,11 @@ the program writes the following into `function_calling_results.json`:
 
 **1) How LLMs generate text, token by token**
 
-- OpenAI Cookbook - [https://cookbook.openai.com/](https://cookbook.openai.com/)
-- Google AI for Developers - [https://ai.google.dev/](https://ai.google.dev/)
 - Hugging Face Learn - [https://huggingface.co/learn](https://huggingface.co/learn)
+- OpenAI Cookbook - [https://cookbook.openai.com/](https://cookbook.openai.com/)
 
-**2) Tokenization (BPE / SentencePiece)**
+**2) Tokenization**
 
-- OpenAI tiktoken - [https://github.com/openai/tiktoken](https://github.com/openai/tiktoken)
-- Google SentencePiece - [https://github.com/google/sentencepiece](https://github.com/google/sentencepiece)
 - Hugging Face Tokenizers docs - [https://huggingface.co/docs/tokenizers/index](https://huggingface.co/docs/tokenizers/index)
 - Microsoft token fundamentals - [https://learn.microsoft.com/en-us/dotnet/ai/conceptual/understanding-tokens](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/understanding-tokens)
 
@@ -227,7 +224,6 @@ the program writes the following into `function_calling_results.json`:
 **5) Constrained (grammar-guided) decoding**
 
 - OpenAI Structured Outputs - [https://platform.openai.com/docs/guides/structured-outputs](https://platform.openai.com/docs/guides/structured-outputs)
-- llama.cpp grammars (GBNF) - [https://github.com/ggerganov/llama.cpp/tree/master/grammars](https://github.com/ggerganov/llama.cpp/tree/master/grammars)
 - Hugging Face text generation docs - [https://huggingface.co/docs/transformers/main/en/main_classes/text_generation](https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
 
 **6) Python fundamentals this project enforces**
