@@ -1,22 +1,23 @@
 import sys
-
-try:
-    from .classes import Init
-    from .llm_sdk import llm_sdk
-    from pydantic import ValidationError
-    from .classes import FunctionCallEngine
-except KeyboardInterrupt:
-    print("\nAborted while loading dependencies.")
-    sys.exit(130)
+from os import system
+from .classes import Init
+from .llm_sdk import llm_sdk
+from rich.console import Console
+from pydantic import ValidationError
+from .classes import FunctionCallEngine
 
 
 def main() -> int:
+
     config = Init()
+    console = Console()
     args = config.parse_args()
     definitions_path, prompts_path, output_path = config.resolve_paths(args)
 
-    print(f"\n{4 * '-'} Call_me_maybe project for 42 Lisbon {4 * '-'}\n")
     try:
+        system("clear")
+        print(f"\n{4 * '-'} Call_me_maybe project for 42 Lisbon {4 * '-'}\n")
+
         print("Preparing LLM model and resolving prompts...")
         llm = llm_sdk.Small_LLM_Model()
         engine = FunctionCallEngine(
@@ -26,8 +27,10 @@ def main() -> int:
             output_path=output_path,
         )
         engine.load_inputs()
-        engine.run()
+        with console.status("Generating output results..."):
+            engine.run()
         engine.write_output()
+
     except ValidationError as error:
         print(f"Error: invalid data in {definitions_path}:")
         for issue in error.errors():
@@ -44,7 +47,20 @@ def main() -> int:
         print(f"{error}\nExiting...")
         return 0
 
-    print(f"\nWrote {len(engine.results)} result(s) to:\n{output_path}")
+    system("clear")
+    total = len(engine.prompts)
+    succeeded = len(engine.results)
+    if succeeded == total:
+        print(
+            f"Success!\nWrote {succeeded} result(s) from {total} "
+            f"prompt(s) to:\n{output_path}"
+        )
+    else:
+        print(
+            f"Partial success: wrote {succeeded}/{total} result(s) "
+            f"({total - succeeded} prompt(s) skipped, see messages above) "
+            f"to:\n{output_path}"
+        )
     return 0
 
 
