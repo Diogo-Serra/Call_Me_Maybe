@@ -12,7 +12,6 @@ class FunctionCallEngine(BaseModel):
     """Loads inputs, runs the generation loop, writes the results file."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
     llm: Small_LLM_Model
     definitions_path: Path
     prompts_path: Path

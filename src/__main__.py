@@ -44,7 +44,7 @@ def main() -> int:
         print(f"\nUnexpected error ({type(error).__name__}): {error}")
         return 1
     except (BaseException, KeyboardInterrupt) as error:
-        print(f"{error}\nExiting...")
+        print(f"{error}\nInterrupted. Exiting...")
         return 0
 
     system("clear")
