@@ -14,7 +14,7 @@ The program uses a **small local LLM** (Qwen/Qwen3-0.6B) through a provided SDK,
 
 - Python 3.10+
 - [uv](https://docs.astral.sh/uv/) for dependency management
-- A Hugging Face account token in `.env` (`HF_TOKEN=...`), optional but speeds up model downloads
+- A Hugging Face account token in `.env` (`HF_TOKEN=...`) - optional
 
 ### Install
 
