@@ -9,6 +9,7 @@ the provided local LLM SDK used by the command-line pipeline.
 
 run:
     uv run python -m src \
+  --model Qwen/Qwen3-0.6B \
   --functions_definition src/data/input/functions_definition.json \
   --input src/data/input/function_calling_tests.json \
   --output src/data/output/function_calling_results.json
