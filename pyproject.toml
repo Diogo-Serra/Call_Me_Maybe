@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.mypy]
-exclude=["llm_sdk/"]
+exclude = [".venv/", "src/data/", "src/llm_sdk/"]
 
 [build-system]
 requires = ["hatchling"]

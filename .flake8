@@ -1,2 +1,2 @@
 [flake8]
-exclude=.venv, src/llm_sdk
+exclude=.venv, src/llm_sdk, src/data

@@ -20,8 +20,8 @@ debug:
 	$(ENV_UV) run python -m pdb -m src
 
 lint:
-	$(ENV_UV) run flake8 .
-	$(ENV_UV) run mypy . $(MYPY_FLAGS)
+	$(ENV_UV) run flake8 src
+	$(ENV_UV) run mypy src $(MYPY_FLAGS)
 
 lint-strict:
 	$(ENV_UV) run flake8 .
