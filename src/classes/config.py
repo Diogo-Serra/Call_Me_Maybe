@@ -12,6 +12,7 @@ class CliArgs(BaseModel):
     functions_definition: Path | None
     input: Path | None
     output: Path | None
+    model: str = "Qwen/Qwen3-0.6B"
 
 
 class Init(BaseModel):
@@ -43,11 +44,13 @@ class Init(BaseModel):
         )
         parser.add_argument("--input", type=Path, default=None)
         parser.add_argument("--output", type=Path, default=None)
+        parser.add_argument("--model", type=str, default="Qwen/Qwen3-0.6B")
         namespace = parser.parse_args()
         return CliArgs(
             functions_definition=namespace.functions_definition,
             input=namespace.input,
             output=namespace.output,
+            model=namespace.model,
         )
 
     def resolve_paths(
