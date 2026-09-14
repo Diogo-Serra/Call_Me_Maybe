@@ -1,4 +1,5 @@
 import numpy
+from numpy.typing import NDArray
 from .constants import NUMBER_PREFIX_RE
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
@@ -10,7 +11,7 @@ class ConstrainedDecoder(BaseModel):
     vocabulary: Vocabulary
     function_definitions: list[FunctionDefinition]
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    _string_safe_ids: numpy.ndarray | None = PrivateAttr(default=None)
+    _string_safe_ids: NDArray[numpy.int_] | None = PrivateAttr(default=None)
 
     def select_function_name(
         self, llm: Small_LLM_Model, input_ids: list[int]
@@ -31,9 +32,10 @@ class ConstrainedDecoder(BaseModel):
         llm: Small_LLM_Model,
         input_ids: list[int],
         function_def: FunctionDefinition,
-    ) -> dict:
+    ) -> dict[str, object]:
         """Constrained-decode every parameter value per its declared type."""
         parameters: dict[str, object] = {}
+        value: bool | float | str = ""
         ids = list(input_ids)
         for param_name, param_schema in function_def.parameters.items():
             param_type = param_schema.get("type", "string")
@@ -135,7 +137,7 @@ class ConstrainedDecoder(BaseModel):
             partial += self.vocabulary.id_to_token[best_id]
         return partial.strip(" '\""), ids
 
-    def _get_string_safe_ids(self) -> numpy.ndarray:
+    def _get_string_safe_ids(self) -> NDArray[numpy.int_]:
         """Cache the token ids that never break a JSON string boundary.
         Unlike enum/number continuation, string safety never depends on
         `partial`, so the mask can be built once and reused every step."""

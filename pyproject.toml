@@ -13,6 +13,9 @@ dependencies = [
     "llm-sdk>=1.0.1",
 ]
 
+[tool.mypy]
+exclude=["llm_sdk/"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

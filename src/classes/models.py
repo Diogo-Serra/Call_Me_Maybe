@@ -2,7 +2,7 @@ import json
 from typing import Any
 from .constants import NUMERIC_TOKEN_RE
 from pydantic import BaseModel, ConfigDict
-from ..llm_sdk.llm_sdk import Small_LLM_Model
+from ..llm_sdk.llm_sdk import Small_LLM_Model as Small_LLM_Model
 
 
 class FunctionDefinition(BaseModel):
@@ -10,8 +10,8 @@ class FunctionDefinition(BaseModel):
 
     name: str
     description: str
-    parameters: dict[str, dict]
-    returns: dict
+    parameters: dict[str, dict[str, Any]]
+    returns: dict[str, Any]
 
 
 class FunctionCallResult(BaseModel):
