@@ -6,7 +6,7 @@
 
 Call Me Maybe is a function calling project that translates natural language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of natural language prompts, the goal is to identify the correct function to call and extract its arguments with the correct types, producing valid JSON output for every single prompt.
 
-The program uses a **small local LLM** (Qwen/Qwen3-0.6B) through a provided SDK, and relies on **constrained decoding** - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both **syntactically valid JSON** and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model. The LLM is only ever used to choose the function name and generate each argument value; the surrounding JSON object is assembled in Python, so invalid syntax is never possible.
+The program uses a **small local text-generation LLM** through a provided SDK, and relies on **constrained decoding** - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both **syntactically valid JSON** and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model. The project accepts several Hugging Face causal-text models via the `--model` CLI flag; the default is `Qwen/Qwen3-0.6B`, but any compatible text-to-text model can be selected. The LLM is only ever used to choose the function name and generate each argument value; the surrounding JSON object is assembled in Python, so invalid syntax is never possible.
 
 ## Instructions
 
@@ -30,14 +30,23 @@ make run
 # equivalent to: uv run python -m src
 ```
 
-By default the program reads `src/data/input/functions_definition.json` and `src/data/input/function_calling_tests.json`, and writes `src/data/output/function_calling_results.json`. Every path can be overridden:
+By default the program reads `src/data/input/functions_definition.json` and `src/data/input/function_calling_tests.json`, and writes `src/data/output/function_calling_results.json`. The model can also be changed at runtime with `--model`, and every path can be overridden:
 
 ```bash
 uv run python -m src \
+  --model Qwen/Qwen3-0.6B \
   --functions_definition src/data/input/functions_definition.json \
   --input src/data/input/function_calling_tests.json \
   --output src/data/output/function_calling_results.json
 ```
+
+Example with a different Hugging Face text-generation model:
+
+```bash
+uv run python -m src --model Qwen/Qwen3-1.7B
+```
+
+The model name should be a Hugging Face repository ID for a compatible causal language model (for example `Qwen/Qwen3-0.6B`, `Qwen/Qwen3-1.7B`, or other `AutoTokenizer`/`AutoModelForCausalLM` checkpoints).
 
 ### Other Makefile targets
 
