@@ -6,7 +6,7 @@
 
 Call Me Maybe is a function-calling project that translates natural-language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of prompts, the objective is to identify the correct function to call, extract its arguments with the correct types, and emit valid JSON output for every processed request.
 
-The program uses a **small causal text-generation LLM from Hugging Face** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts any Hugging Face model repository ID via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`, but any compatible causal-text checkpoint on Hugging Face can be selected.
+The program uses a **small causal text-generation LLM from Hugging Face** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts any Hugging Face model repository ID via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`; selected checkpoints must be compatible with `AutoModelForCausalLM` and the current GPT-2-style vocabulary decoding path.
 
 The LLM is only used to choose the function name and generate argument values; the surrounding JSON object is assembled in Python, so invalid syntax is never possible. When no valid function name is selected, the system returns the dedicated fallback function `fn_unknown` rather than allowing the model to generate an unrelated or free-form answer.
 
@@ -30,6 +30,12 @@ make install
 ```bash
 make run
 # equivalent to: uv run python -m src
+```
+
+To pass command-line options, invoke the module directly:
+
+```bash
+uv run python -m src --model Qwen/Qwen3-0.6B
 ```
 
 On first run, the selected model (default `Qwen/Qwen3-0.6B`) is downloaded from Hugging Face and cached locally. Subsequent runs will use the cached model directly.
@@ -75,8 +81,8 @@ Call_Me_Maybe/
     ├── __init__.py
     ├── __main__.py            # CLI entry point (python -m src)
     ├── classes/
+    │   ├── __init__.py
     │   ├── config.py          # Init (env + CLI args), CliArgs
-    │   ├── constants.py       # shared regex constants
     │   ├── decoder.py         # ConstrainedDecoder
     │   ├── engine.py          # FunctionCallEngine
     │   └── models.py          # FunctionDefinition, FunctionCallResult, Vocabulary
@@ -87,10 +93,12 @@ Call_Me_Maybe/
     │   └── output/            # generated at runtime
     └── llm_sdk/
         └── llm_sdk/
-            └── __init__.py    # Small_LLM_Model
+        ├── __init__.py    # Small_LLM_Model
+        ├── pyproject.toml
+        └── uv.lock
 ```
 
-`src/classes` holds every pydantic model in the project: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), the vocabulary wrapper, the constrained decoder, the engine that orchestrates the whole pipeline, and configuration (`Init`, `CliArgs`). `src/data/input` stores the evaluation cases and function definitions; `src/data/output` is generated on each run and excluded from version control. `src/llm_sdk` is the provided SDK used to connect to the model.
+`src/classes` contains the application models and pipeline components: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), vocabulary wrapper, constrained decoder, engine, and configuration (`Init`, `CliArgs`). `src/data/input` stores the function definitions and prompts; `src/data/output` is generated at runtime and excluded from version control. `src/llm_sdk` is a separately packaged local SDK used to load and run the Hugging Face model.
 
 ## Small_LLM API
 
@@ -133,7 +141,7 @@ The pipeline never asks the LLM to produce raw JSON text. Instead, it asks the m
 
 4. **Assembly** (`FunctionCallEngine`) wraps the selected name and the generated parameters, together with the original prompt, into a `FunctionCallResult` pydantic model, which is what actually guarantees 100% valid, schema-shaped JSON on `write_output()` - the LLM never has a chance to emit invalid structure because it is never asked to emit structure at all.
 
-At every step, logits come from `get_logits_from_input_ids`, and the same sequence of token ids keeps growing across function-name selection and every parameter, so later fields are generated with full knowledge of the original request and all previously generated values.
+At every step, logits come from `get_logits_from_input_ids`, and the same sequence of token IDs keeps growing across function-name selection and every parameter, so later fields retain the original request and previously generated values.
 
 ## Design Decisions
 
@@ -147,12 +155,16 @@ At every step, logits come from `get_logits_from_input_ids`, and the same sequen
 
 ## Performance Analysis
 
-On the provided `function_calling_tests.json` (11 prompts, 5 distinct functions), the pipeline produces:
+On the provided `function_calling_tests.json` (12 prompts, 6 declared functions including `fn_unknown`), the pipeline produces:
 
 - **100% valid JSON** on every run - guaranteed structurally, since the JSON object is assembled in Python from typed values, never parsed out of raw model output.
-- **Correct function selection and argument extraction on all 11 prompts**, including numeric arguments (`fn_add_numbers`, `fn_get_square_root`), string arguments (`fn_greet`, `fn_reverse_string`), and multi-argument calls (`fn_substitute_string_with_regex`, three parameters).
-- **Runtime**: a full run over all 11 prompts, on CPU, completes in well under a minute (excluding the one-time model/tokenizer download and load). Most of the cost is the repeated `get_logits_from_input_ids` forward passes; the vectorized `numpy` masking is a minor contributor, and numeric fields further narrow the scan to the precomputed `numeric_token_ids` subset instead of the full ~150k-token vocabulary.
+- **Model-dependent semantic accuracy**: the default `Qwen/Qwen3-0.6B` correctly routed the supplied prompts in a verified run, but regex values remain model-generated and should be evaluated for meaning, not only syntax. Constrained decoding does not guarantee that a valid regex expresses the user's intent.
+- **Runtime**: a full run over all 12 prompts on CPU is dominated by repeated `get_logits_from_input_ids` forward passes. Vectorized `numpy` masking is a minor contributor, and numeric fields narrow the scan to the precomputed `numeric_token_ids` subset instead of the full vocabulary.
 - **Reliability**: missing input files, malformed JSON, and schema-invalid function definitions are all caught explicitly and reported with a clear message and a non-zero exit code, without a traceback.
+
+### Model Selection
+
+Constrained decoding guarantees valid function names, value types, and JSON structure, but it cannot supply semantic understanding that is absent from the model's logits. In testing, the default `Qwen/Qwen3-0.6B` was substantially more reliable than the much smaller `HuggingFaceTB/SmolLM2-135M` base model, which often confused numeric text inside a string with an arithmetic request. This suggests that an instruction-tuned model in the roughly 0.5B-0.6B range is a practical minimum for varied function-calling prompts in this setup. Smaller or base-only models may still work for narrow tasks, but reliable results may require deterministic post-processing, task-specific fine-tuning, or a larger instruction-tuned checkpoint.
 
 ## Challenges Faced
 
@@ -181,6 +193,7 @@ Run against custom files:
 
 ```bash
 uv run python -m src \
+  --model Qwen/Qwen3-0.6B \
   --functions_definition path/to/functions_definition.json \
   --input path/to/prompts.json \
   --output path/to/results.json
@@ -256,11 +269,10 @@ the program writes the following into `function_calling_results.json`:
 - Python dataclasses - [https://docs.python.org/3/library/dataclasses.html](https://docs.python.org/3/library/dataclasses.html)
 - Python exceptions - [https://docs.python.org/3/tutorial/errors.html](https://docs.python.org/3/tutorial/errors.html)
 
-**7) Project tools: uv, Makefile, pytest**
+**7) Project tools: uv and Makefile**
 
 - uv docs (Astral) - [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/)
 - GNU Make manual - [https://www.gnu.org/software/make/manual/make.html](https://www.gnu.org/software/make/manual/make.html)
-- pytest docs - [https://docs.pytest.org/](https://docs.pytest.org/)
 - Python Packaging User Guide (PyPA) - [https://packaging.python.org/](https://packaging.python.org/)
 
 **How AI was used on this project**
