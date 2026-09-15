@@ -4,9 +4,11 @@
 
 ## Description
 
-Call Me Maybe is a function calling project that translates natural language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of natural language prompts, the goal is to identify the correct function to call and extract its arguments with the correct types, producing valid JSON output for every single prompt.
+Call Me Maybe is a function-calling project that translates natural-language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of prompts, the objective is to identify the correct function to call, extract its arguments with the correct types, and emit valid JSON output for every processed request.
 
-The program uses a **small local text-generation LLM** through a provided SDK, and relies on **constrained decoding** - a token-by-token generation technique that restricts the model's next-token choices to only those that keep the output both **syntactically valid JSON** and compliant with the expected function schema - to guarantee 100% valid, parseable output even from an unreliable, low-parameter model. The project accepts several Hugging Face causal-text models via the `--model` CLI flag; the default is `Qwen/Qwen3-0.6B`, but any compatible text-to-text model can be selected. The LLM is only ever used to choose the function name and generate each argument value; the surrounding JSON object is assembled in Python, so invalid syntax is never possible.
+The program uses a **small local text-generation LLM** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts either a Hugging Face model repository ID or a local exported model directory via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`, but any compatible causal-text checkpoint can be selected.
+
+The LLM is only used to choose the function name and generate argument values; the surrounding JSON object is assembled in Python, so invalid syntax is never possible. When no valid function name is selected, the system returns the dedicated fallback function `fn_unknown` rather than allowing the model to generate an unrelated or free-form answer.
 
 ## Instructions
 
@@ -46,7 +48,12 @@ Example with a different Hugging Face text-generation model:
 uv run python -m src --model Qwen/Qwen3-1.7B
 ```
 
-The model name should be a Hugging Face repository ID for a compatible causal language model (for example `Qwen/Qwen3-0.6B`, `Qwen/Qwen3-1.7B`, or other `AutoTokenizer`/`AutoModelForCausalLM` checkpoints).
+The `--model` value may be either:
+
+- a Hugging Face repository ID such as `Qwen/Qwen3-0.6B`; or
+- a local directory containing an exported model checkpoint such as `models/function_selector_gpt2`.
+
+This makes the project compatible with both public hosted checkpoints and locally trained adapters that have been exported for runtime use.
 
 ### Other Makefile targets
 
@@ -118,7 +125,7 @@ The pipeline never asks the LLM to produce raw JSON text. Instead, it asks the m
 
 1. **Vocabulary** (`classes/models.py::Vocabulary`) downloads `vocab.json` through `get_path_to_vocab_file()` and decodes every entry out of GPT-2's byte-level BPE alphabet back into real UTF-8 text, producing an `id_to_token` map used by every decoding step below. A `numeric_token_ids` subset is precomputed to speed up number generation.
 
-2. **Function selection** (`ConstrainedDecoder.select_function_name`) builds a prompt listing every available function and its description, then constrained-decodes the answer token by token: at each step, the logits of every token whose text would not keep the generated string a prefix of at least one real function name are masked to `-inf`, and `numpy.argmax` picks the survivor (`_generate_enum`). Generation stops the moment the partial string exactly matches one function name, or if masking leaves no finite logit at all.
+2. **Function selection** (`ConstrainedDecoder.select_function_name`) builds a prompt listing every available function and its description, then constrained-decodes the answer token by token: at each step, the logits of every token whose text would not keep the generated string a prefix of at least one real function name are masked to `-inf`, and `numpy.argmax` picks the survivor (`_generate_enum`). Generation stops when the partial string exactly matches one valid function name. If no valid function matches, the decoder falls back to `fn_unknown` instead of returning a random or irrelevant function.
 
 3. **Parameter generation** (`ConstrainedDecoder.generate_parameters`) walks the chosen function's parameter schema in order. For each parameter, a short sub-prompt asking for that specific value is appended to the running token sequence, and the value is generated under a type-specific constraint, always via the same mask-then-`argmax` pattern:
    - `number` - only tokens that keep the partial string a valid integer/float prefix are left unmasked (`_generate_number`); generation stops as soon as the model's own unconstrained top choice would break the number format.
@@ -159,6 +166,7 @@ On the provided `function_calling_tests.json` (11 prompts, 5 distinct functions)
 
 - **End-to-end runs** against the provided `functions_definition.json` and `function_calling_tests.json`, inspecting `function_calling_results.json` for valid JSON, correct `name`, and correctly typed `parameters` on every entry.
 - **Negative-path testing**: pointing `--functions_definition` at a missing file, and at a file with a function entry missing required fields (`name` only, no `description`/`parameters`/`returns`), to confirm the program exits with code 1 and a readable message instead of a traceback.
+- **Fallback validation**: running prompts that do not match any available function to confirm the system resolves them to `fn_unknown` rather than generating free-form output.
 - **Static checks**: `make lint` (flake8 + mypy with `--disallow-untyped-defs --check-untyped-defs`) run after every change.
 - **CLI override checks**: running with `--input`/`--output`/`--functions_definition` pointed at alternate paths to confirm the flags take precedence over the defaults.
 
@@ -177,6 +185,12 @@ uv run python -m src \
   --functions_definition path/to/functions_definition.json \
   --input path/to/prompts.json \
   --output path/to/results.json
+```
+
+Run against a locally exported model checkpoint:
+
+```bash
+uv run python -m src --model models/function_selector_gpt2
 ```
 
 Given this prompt in `function_calling_tests.json`:

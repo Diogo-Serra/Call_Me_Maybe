@@ -18,8 +18,16 @@ class ConstrainedDecoder(BaseModel):
     def select_function_name(
         self, llm: Small_LLM_Model, input_ids: list[int]
     ) -> tuple[FunctionDefinition, list[int]]:
-        """Constrained-decode the name field to one of the known functions."""
+        """Constrained-decode the function name to a valid choice."""
         names = [fd.name for fd in self.function_definitions]
+        unknown = next(
+            (
+                fd
+                for fd in self.function_definitions
+                if fd.name == "fn_unknown"
+            ),
+            None,
+        )
         partial, ids = self._generate_enum(llm, input_ids, names)
         for fd in self.function_definitions:
             if fd.name == partial:
@@ -27,6 +35,8 @@ class ConstrainedDecoder(BaseModel):
         for fd in self.function_definitions:
             if fd.name.startswith(partial):
                 return fd, ids
+        if unknown is not None:
+            return unknown, ids
         return self.function_definitions[0], ids
 
     def generate_parameters(

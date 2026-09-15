@@ -14,6 +14,28 @@ logging.set_verbosity_error()  # keep the console clean
 
 
 class Small_LLM_Model:
+    def _resolve_local_or_hf_path(self, filename: str) -> str:
+        """Return either a local file path or the HF Hub download path."""
+        if os.path.isdir(self._model_name):
+            candidates = [
+                os.path.join(self._model_name, filename),
+                os.path.join(self._model_name, os.path.basename(filename)),
+            ]
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    return candidate
+
+            token_path = getattr(self._tokenizer, "vocab_file", None)
+            if token_path and os.path.exists(token_path):
+                return token_path
+
+            raise FileNotFoundError(
+                f"Could not find {filename!r} inside local model directory: "
+                f"{self._model_name}"
+            )
+
+        return hf_hub_download(repo_id=self._model_name, filename=filename)
+
     """Utility class wrapping a lightweight Hugging Face causal-LM for fast, low-memory experimentation.
 
     Parameters
@@ -100,27 +122,21 @@ class Small_LLM_Model:
 
 
     def get_path_to_vocab_file(self) -> str:
-        vocab_file_name = self._tokenizer.vocab_files_names.get('vocab_file', "vocab.json")
-        vocab_path = hf_hub_download(
-            repo_id=self._model_name,
-            filename=vocab_file_name
+        vocab_file_name = self._tokenizer.vocab_files_names.get(
+            "vocab_file", "vocab.json"
         )
-        return vocab_path
+        return self._resolve_local_or_hf_path(vocab_file_name)
 
 
     def get_path_to_merges_file(self) -> str:
-        merges_file_name = self._tokenizer.vocab_files_names.get('merges_file', "merges.txt")
-        merges_path = hf_hub_download(
-            repo_id=self._model_name,
-            filename=merges_file_name
+        merges_file_name = self._tokenizer.vocab_files_names.get(
+            "merges_file", "merges.txt"
         )
-        return merges_path
+        return self._resolve_local_or_hf_path(merges_file_name)
 
 
     def get_path_to_tokenizer_file(self) -> str:
-        tokenizer_file_name = self._tokenizer.vocab_files_names.get('tokenizer_file', "tokenizer.json")
-        tokenizer_path = hf_hub_download(
-            repo_id=self._model_name,
-            filename=tokenizer_file_name
+        tokenizer_file_name = self._tokenizer.vocab_files_names.get(
+            "tokenizer_file", "tokenizer.json"
         )
-        return tokenizer_path
+        return self._resolve_local_or_hf_path(tokenizer_file_name)
