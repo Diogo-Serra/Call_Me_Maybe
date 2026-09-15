@@ -19,7 +19,8 @@ def main() -> int:
         system("clear")
         print(f"\n{4 * '-'} Call_me_maybe project for 42 Lisbon {4 * '-'}\n")
 
-        print("Preparing LLM model and resolving prompts...")
+        print("Preparing LLM model and resolving prompts... "
+              "It can take sometime.")
         llm = llm_sdk.Small_LLM_Model(model_name=args.model)
         engine = FunctionCallEngine(
             llm=llm,

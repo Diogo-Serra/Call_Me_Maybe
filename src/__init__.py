@@ -1,11 +1,11 @@
-"""Call Me Maybe: schema-constrained function calling with a local LLM.
+"""Call Me Maybe: schema-constrained function calling with a small text LLM.
 
 The package translates natural-language requests into validated function calls.
 It uses greedy, token-level constrained decoding to select a declared function
 and generate schema-compatible arguments, then serializes the result as JSON.
 
 The package-level API exposes the application configuration, bundled data, and
-the provided local LLM SDK used by the command-line pipeline.
+the provided LLM SDK used by the command-line pipeline.
 
 run:
     uv run python -m src \

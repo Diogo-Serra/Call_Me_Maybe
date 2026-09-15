@@ -7,13 +7,13 @@ MYPY_FLAGS := --warn-return-any --warn-unused-ignores \
 			  --check-untyped-defs
 
 install:
-	@echo Installing dependecies and preparing the system.
+	@echo Installing dependencies.
 	python3 -m venv .venv
 	$(ENV_PIP) install --upgrade pip uv
 	$(ENV_UV) sync
 
 run:
-	@echo Preparing imports. It can take sometime.
+	@echo Preparing the system.
 	$(ENV_UV) run python -m src
 
 debug:

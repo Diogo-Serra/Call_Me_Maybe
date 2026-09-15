@@ -6,7 +6,7 @@
 
 Call Me Maybe is a function-calling project that translates natural-language prompts into structured, machine-executable function calls. Given a set of available function definitions and a set of prompts, the objective is to identify the correct function to call, extract its arguments with the correct types, and emit valid JSON output for every processed request.
 
-The program uses a **small local text-generation LLM** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts either a Hugging Face model repository ID or a local exported model directory via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`, but any compatible causal-text checkpoint can be selected.
+The program uses a **small causal text-generation LLM from Hugging Face** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts any Hugging Face model repository ID via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`, but any compatible causal-text checkpoint on Hugging Face can be selected.
 
 The LLM is only used to choose the function name and generate argument values; the surrounding JSON object is assembled in Python, so invalid syntax is never possible. When no valid function name is selected, the system returns the dedicated fallback function `fn_unknown` rather than allowing the model to generate an unrelated or free-form answer.
 
@@ -32,6 +32,8 @@ make run
 # equivalent to: uv run python -m src
 ```
 
+On first run, the selected model (default `Qwen/Qwen3-0.6B`) is downloaded from Hugging Face and cached locally. Subsequent runs will use the cached model directly.
+
 By default the program reads `src/data/input/functions_definition.json` and `src/data/input/function_calling_tests.json`, and writes `src/data/output/function_calling_results.json`. The model can also be changed at runtime with `--model`, and every path can be overridden:
 
 ```bash
@@ -48,12 +50,9 @@ Example with a different Hugging Face text-generation model:
 uv run python -m src --model Qwen/Qwen3-1.7B
 ```
 
-The `--model` value may be either:
-
-- a Hugging Face repository ID such as `Qwen/Qwen3-0.6B`; or
-- a local directory containing an exported model checkpoint such as `models/function_selector_gpt2`.
-
-This makes the project compatible with both public hosted checkpoints and locally trained adapters that have been exported for runtime use.
+The `--model` flag accepts any Hugging Face repository ID (e.g., `--model Qwen/Qwen3-0.6B` or `Qwen/Qwen3-1.7B`):
+- Model weights, tokenizer, and configuration files are downloaded from the Hugging Face Hub and cached locally under `~/.cache/huggingface/hub`.
+- For private or gated models, the `HF_TOKEN` from `.env` is automatically used.
 
 ### Other Makefile targets
 
@@ -91,7 +90,7 @@ Call_Me_Maybe/
             └── __init__.py    # Small_LLM_Model
 ```
 
-`src/classes` holds every pydantic model in the project: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), the vocabulary wrapper, the constrained decoder, the engine that orchestrates the whole pipeline, and configuration (`Init`, `CliArgs`). `src/data/input` stores the evaluation cases and function definitions; `src/data/output` is generated on each run and excluded from version control. `src/llm_sdk` is the provided SDK used to connect to the local model.
+`src/classes` holds every pydantic model in the project: the input/output schemas (`FunctionDefinition`, `FunctionCallResult`), the vocabulary wrapper, the constrained decoder, the engine that orchestrates the whole pipeline, and configuration (`Init`, `CliArgs`). `src/data/input` stores the evaluation cases and function definitions; `src/data/output` is generated on each run and excluded from version control. `src/llm_sdk` is the provided SDK used to connect to the model.
 
 ## Small_LLM API
 
@@ -187,10 +186,10 @@ uv run python -m src \
   --output path/to/results.json
 ```
 
-Run against a locally exported model checkpoint:
+Run with a specific Hugging Face model:
 
 ```bash
-uv run python -m src --model models/function_selector_gpt2
+uv run python -m src --model Qwen/Qwen3-1.7B
 ```
 
 Given this prompt in `function_calling_tests.json`:
