@@ -1,6 +1,7 @@
+import re
+from typing import ClassVar
 import numpy
 from numpy.typing import NDArray
-from .constants import NUMBER_PREFIX_RE
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
 
@@ -8,6 +9,7 @@ from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
 class ConstrainedDecoder(BaseModel):
     """Masks next-token logits so only schema-valid continuations survive."""
 
+    NUMBER_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(r"^-?\d*\.?\d*$")
     vocabulary: Vocabulary
     function_definitions: list[FunctionDefinition]
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -96,12 +98,13 @@ class ConstrainedDecoder(BaseModel):
             )
             top_id_all = int(numpy.argmax(logits))
             top_text_all = self.vocabulary.id_to_token.get(top_id_all, "")
-            if partial and not NUMBER_PREFIX_RE.match(partial + top_text_all):
+            if partial and not self.NUMBER_PREFIX_RE.match(
+                    partial + top_text_all):
                 break
             masked = numpy.full(logits.shape, float("-inf"))
             for token_id in self.vocabulary.numeric_token_ids:
                 token_text = self.vocabulary.id_to_token[token_id]
-                if NUMBER_PREFIX_RE.match(partial + token_text):
+                if self.NUMBER_PREFIX_RE.match(partial + token_text):
                     masked[token_id] = logits[token_id]
             if not numpy.isfinite(masked).any():
                 break

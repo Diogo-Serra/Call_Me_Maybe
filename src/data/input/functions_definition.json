@@ -1,5 +1,13 @@
 [
   {
+    "name": "fn_unknown",
+    "description": "Use this when the request does not clearly match any available function.",
+    "parameters": {},
+    "returns": {
+      "type": "null"
+    }
+  },
+  {
     "name": "fn_add_numbers",
     "description": "Add two numbers together and return their sum.",
     "parameters": {

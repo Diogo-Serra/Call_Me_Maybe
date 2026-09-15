@@ -1,8 +1,8 @@
 import json
-from typing import Any
-from .constants import NUMERIC_TOKEN_RE
+import re
+from typing import Any, ClassVar
 from pydantic import BaseModel, ConfigDict
-from ..llm_sdk.llm_sdk import Small_LLM_Model as Small_LLM_Model
+from ..llm_sdk.llm_sdk import Small_LLM_Model
 
 
 class FunctionDefinition(BaseModel):
@@ -25,13 +25,13 @@ class FunctionCallResult(BaseModel):
 class Vocabulary(BaseModel):
     """Token-id <-> string map built from the LLM's vocab file."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+    NUMERIC_TOKEN_RE: ClassVar[re.Pattern[str]] = re.compile(r"^[\d.\-]+$")
     llm: Small_LLM_Model
     vocab_path: str | None = None
     token_to_id: dict[str, int] = {}
     id_to_token: dict[int, str] = {}
     numeric_token_ids: list[int] = []
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def build(self) -> None:
         """Download the vocab file and decode it into id -> string form."""
@@ -47,7 +47,7 @@ class Vocabulary(BaseModel):
         self.id_to_token = id_to_token
         self.numeric_token_ids = [
             token_id for token_id, text in id_to_token.items()
-            if text and NUMERIC_TOKEN_RE.match(text)
+            if text and self.NUMERIC_TOKEN_RE.match(text)
         ]
 
     @staticmethod
