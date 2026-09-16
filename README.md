@@ -32,7 +32,7 @@ make run
 # equivalent to: uv run python -m src
 ```
 
-To pass command-line options, invoke the module directly:
+To pass command-line options:
 
 ```bash
 uv run python -m src --model Qwen/Qwen3-0.6B
