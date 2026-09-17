@@ -35,7 +35,7 @@ make run
 To pass command-line options, invoke the module directly:
 
 ```bash
-uv run python -m src --model Qwen/Qwen3-0.6B
+(.venv)uv run python -m src --model Qwen/Qwen3-0.6B
 ```
 
 On first run, the selected model (default `Qwen/Qwen3-0.6B`) is downloaded from Hugging Face and cached locally. Subsequent runs will use the cached model directly.
@@ -43,7 +43,7 @@ On first run, the selected model (default `Qwen/Qwen3-0.6B`) is downloaded from 
 By default the program reads `src/data/input/functions_definition.json` and `src/data/input/function_calling_tests.json`, and writes `src/data/output/function_calling_results.json`. The model can also be changed at runtime with `--model`, and every path can be overridden:
 
 ```bash
-uv run python -m src \
+(.venv)uv run python -m src \
   --model Qwen/Qwen3-0.6B \
   --functions_definition src/data/input/functions_definition.json \
   --input src/data/input/function_calling_tests.json \
