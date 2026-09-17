@@ -13,7 +13,7 @@ install:
 	$(ENV_UV) sync
 
 run:
-	@echo Preparing the system.
+	@echo Preparing and starting the system.
 	$(ENV_UV) run python -m src
 
 debug:
