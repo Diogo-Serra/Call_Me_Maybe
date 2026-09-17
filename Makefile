@@ -24,8 +24,8 @@ lint:
 	$(ENV_UV) run mypy src $(MYPY_FLAGS)
 
 lint-strict:
-	$(ENV_UV) run flake8 .
-	$(ENV_UV) run mypy . --strict
+	$(ENV_UV) run flake8 src
+	$(ENV_UV) run mypy src --strict
 
 clean:
 	@echo Cleaning environment ...
