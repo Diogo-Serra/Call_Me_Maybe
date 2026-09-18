@@ -22,7 +22,7 @@ def main() -> int:
         print("Preparing LLM model and resolving prompts... "
               "It can take sometime.")
         llm = llm_sdk.Small_LLM_Model(model_name=args.model)
-        print(f"Model in use: {llm._model_name}")
+        print(f"Model in use: {args.model}")
         engine = FunctionCallEngine(
             llm=llm,
             definitions_path=definitions_path,

@@ -10,7 +10,10 @@ dependencies = [
     "pydantic>=2.13.4",
     "flake8>=7.0.0",
     "mypy>=1.10.0",
-    "llm-sdk>=1.0.1",
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+    "huggingface_hub>=0.20.0",
+    "rich>=13.0.0",
 ]
 
 [tool.mypy]
