@@ -47,7 +47,7 @@ class ConstrainedDecoder(BaseModel):
     ) -> dict[str, object]:
         """Constrained-decode every parameter value per its declared type."""
         parameters: dict[str, object] = {}
-        value: bool | float | str = ""
+        value: float | str = ""
         ids = list(input_ids)
         for param_name, param_schema in function_def.parameters.items():
             param_type = param_schema.get("type", "string")
@@ -55,9 +55,6 @@ class ConstrainedDecoder(BaseModel):
             ids = ids + llm.encode(prompt)[0].tolist()
             if param_type == "number":
                 value, ids = self._generate_number(llm, ids)
-            elif param_type == "boolean":
-                text, ids = self._generate_enum(llm, ids, ["true", "false"])
-                value = text == "true"
             else:
                 value, ids = self._generate_string(llm, ids)
             parameters[param_name] = value
