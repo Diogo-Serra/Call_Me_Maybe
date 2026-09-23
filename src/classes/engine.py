@@ -66,6 +66,7 @@ class FunctionCallEngine(BaseModel):
             json.dump(payload, f, indent=2)
 
     def _process_prompt(self, prompt: str) -> FunctionCallResult:
+        """Build the prompt header, then decode a function call for it."""
         assert self.decoder is not None
         header = (
             f'Request: "{prompt}"\n'
@@ -89,6 +90,7 @@ class FunctionCallEngine(BaseModel):
 
     @staticmethod
     def _read_json_array(path: Path) -> list[Any]:
+        """Load a JSON file and ensure its top-level value is an array."""
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)

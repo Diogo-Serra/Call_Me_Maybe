@@ -1,6 +1,6 @@
 import re
-from typing import ClassVar
 import numpy
+from typing import ClassVar
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
@@ -9,11 +9,11 @@ from .models import FunctionDefinition, Small_LLM_Model, Vocabulary
 class ConstrainedDecoder(BaseModel):
     """Masks next-token logits so only schema-valid continuations survive."""
 
-    NUMBER_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(r"^-?\d*\.?\d*$")
     vocabulary: Vocabulary
     function_definitions: list[FunctionDefinition]
     model_config = ConfigDict(arbitrary_types_allowed=True)
     _string_safe_ids: NDArray[numpy.int_] | None = PrivateAttr(default=None)
+    NUMBER_PREFIX_RE: ClassVar[re.Pattern[str]] = re.compile(r"^-?\d*\.?\d*$")
 
     def select_function_name(
         self, llm: Small_LLM_Model, input_ids: list[int]
