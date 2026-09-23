@@ -8,7 +8,7 @@ Call Me Maybe is a function-calling project that translates natural-language pro
 
 The program uses a **small causal text-generation LLM from Hugging Face** through a provided SDK and relies on **constrained decoding**: a token-by-token selection strategy that restricts the model's next-token choices to values that preserve both **syntactic validity** and **schema compatibility**. This guarantees robust output even with a lightweight model. The project accepts any Hugging Face model repository ID via the `--model` CLI flag. The default model is `Qwen/Qwen3-0.6B`; selected checkpoints must be compatible with `AutoModelForCausalLM` and the current GPT-2-style vocabulary decoding path.
 
-The LLM is only used to choose the function name and generate argument values; the surrounding JSON object is assembled in Python, so invalid syntax is never possible. When no valid function name is selected, the system returns the dedicated fallback function `fn_unknown` rather than allowing the model to generate an unrelated or free-form answer.
+The LLM is only used to choose the function name and generate argument values; the surrounding JSON object is assembled in Python, so invalid syntax is never possible.
 
 ## Instructions
 
@@ -132,7 +132,7 @@ The pipeline never asks the LLM to produce raw JSON text. Instead, it asks the m
 
 1. **Vocabulary** (`classes/models.py::Vocabulary`) downloads `vocab.json` through `get_path_to_vocab_file()` and decodes every entry out of GPT-2's byte-level BPE alphabet back into real UTF-8 text, producing an `id_to_token` map used by every decoding step below. A `numeric_token_ids` subset is precomputed to speed up number generation.
 
-2. **Function selection** (`ConstrainedDecoder.select_function_name`) builds a prompt listing every available function and its description, then constrained-decodes the answer token by token: at each step, the logits of every token whose text would not keep the generated string a prefix of at least one real function name are masked to `-inf`, and `numpy.argmax` picks the survivor (`_generate_enum`). Generation stops when the partial string exactly matches one valid function name. If no valid function matches, the decoder falls back to `fn_unknown` instead of returning a random or irrelevant function.
+2. **Function selection** (`ConstrainedDecoder.select_function_name`) builds a prompt listing every available function and its description, then constrained-decodes the answer token by token: at each step, the logits of every token whose text would not keep the generated string a prefix of at least one real function name are masked to `-inf`, and `numpy.argmax` picks the survivor (`_generate_enum`). Generation stops when the partial string exactly matches one valid function name.
 
 3. **Parameter generation** (`ConstrainedDecoder.generate_parameters`) walks the chosen function's parameter schema in order. For each parameter, a short sub-prompt asking for that specific value is appended to the running token sequence, and the value is generated under a type-specific constraint, always via the same mask-then-`argmax` pattern:
    - `number` - only tokens that keep the partial string a valid integer/float prefix are left unmasked (`_generate_number`); generation stops as soon as the model's own unconstrained top choice would break the number format.
@@ -154,7 +154,7 @@ At every step, logits come from `get_logits_from_input_ids`, and the same sequen
 
 ## Performance Analysis
 
-On the provided `function_calling_tests.json` (12 prompts, 6 declared functions including `fn_unknown`), the pipeline produces:
+On the provided `function_calling_tests.json` (12 prompts, 5 declared functions), the pipeline produces:
 
 - **100% valid JSON** on every run - guaranteed structurally, since the JSON object is assembled in Python from typed values, never parsed out of raw model output.
 - **Model-dependent semantic accuracy**: the default `Qwen/Qwen3-0.6B` correctly routed the supplied prompts in a verified run, but regex values remain model-generated and should be evaluated for meaning, not only syntax. Constrained decoding does not guarantee that a valid regex expresses the user's intent.
@@ -176,7 +176,6 @@ Constrained decoding guarantees valid function names, value types, and JSON stru
 
 - **End-to-end runs** against the provided `functions_definition.json` and `function_calling_tests.json`, inspecting `function_calling_results.json` for valid JSON, correct `name`, and correctly typed `parameters` on every entry.
 - **Negative-path testing**: pointing `--functions_definition` at a missing file, and at a file with a function entry missing required fields (`name` only, no `description`/`parameters`/`returns`), to confirm the program exits with code 1 and a readable message instead of a traceback.
-- **Fallback validation**: running prompts that do not match any available function to confirm the system resolves them to `fn_unknown` rather than generating free-form output.
 - **Static checks**: `make lint` (flake8 + mypy with `--disallow-untyped-defs --check-untyped-defs`) run after every change.
 - **CLI override checks**: running with `--input`/`--output`/`--functions_definition` pointed at alternate paths to confirm the flags take precedence over the defaults.
 
