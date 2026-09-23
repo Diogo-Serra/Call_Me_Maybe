@@ -67,13 +67,5 @@
     "returns": {
       "type": "string"
     }
-  },
-  {
-    "name": "fn_unknown",
-    "description": "Use this when the request does not clearly match any available function or is ambiguous.",
-    "parameters": {},
-    "returns": {
-      "type": "string"
-    }
   }
 ]
