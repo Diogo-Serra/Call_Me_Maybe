@@ -7,12 +7,12 @@ from typing import Any, ClassVar
 
 
 class CliArgs(BaseModel):
-    """The three optional CLI flags the program accepts."""
+    """The four optional CLI flags the program accepts."""
 
     functions_definition: Path | None
     input: Path | None
     output: Path | None
-    model: str = "Qwen/Qwen3-0.6B"
+    model: str
 
 
 class Init(BaseModel):
@@ -32,7 +32,7 @@ class Init(BaseModel):
             self.hf_token = environ.get("HF_TOKEN")
 
     def parse_args(self) -> CliArgs:
-        """Parse the --functions_definition/--input/--output CLI flags."""
+        """Parse --functions_definition/--input/--output/--model CLI flags."""
         parser = argparse.ArgumentParser(
             prog="python -m src",
             description=(
