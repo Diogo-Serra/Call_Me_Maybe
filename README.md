@@ -284,7 +284,7 @@ the program writes the following into `function_calling_results.json`:
 
 **How AI was used on this project**
 
-An AI coding assistant (GitHub Copilot Chat) was used throughout development for:
+An AI coding assistant (GitHub Copilot Chat, mostly using Claude Sonnet 5 model) was used throughout development for:
 
 - Scaffolding the initial pydantic class structure (`FunctionDefinition`, `FunctionCallResult`, `Vocabulary`, `ConstrainedDecoder`, `FunctionCallEngine`).
 - Implementing and explaining the GPT-2 byte-level BPE reverse mapping needed to decode `vocab.json` into real token text.
