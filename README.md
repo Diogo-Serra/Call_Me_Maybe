@@ -182,6 +182,14 @@ Constrained decoding guarantees valid function names, value types, and JSON stru
 
 ## Example Usage
 
+On 42 school machines, redirect caches and the virtualenv away from the home directory quota:
+
+```bash
+export XDG_CACHE_HOME="/goinfre/$USER/.cache"
+export UV_CACHE_DIR="/goinfre/$USER/.cache"
+export UV_PROJECT_ENVIRONMENT="/goinfre/.venv-call-me-maybe"
+```
+
 Run with the default, bundled test data:
 
 ```bash
